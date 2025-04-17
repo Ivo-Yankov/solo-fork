@@ -5,11 +5,10 @@ more:
     ref: "https://hedera.com/"
     external: true
   - name: Releases
-    ref: "https://github.com/hashgraph/solo/releases"
+    ref: "https://github.com/hiero-ledger/solo/releases"
     external: true
     icon: "gdoc_download"
   - name: "View Source"
-    ref: "https://github.com/hashgraph/solo"
+    ref: "https://github.com/hiero-ledger/solo"
     external: true
     icon: "gdoc_github"
-
