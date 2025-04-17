@@ -484,3 +484,6 @@ deleteme.yaml
 /contextDir/
 /docs/site/.task/checksum/
 /docs/site/output/
+/docs/site/all_versions_site/main/
+/docs/site/all_versions_site/latest/
+/docs/site/all_versions_site/v*/**
