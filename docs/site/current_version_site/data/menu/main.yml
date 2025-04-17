@@ -2,11 +2,7 @@
 # https://geekdocs.de/usage/menus/
 main:
   - name: Versions
-    sub:
-    - name: latest
-      ref: "/Versions/latest/"
-    - name: main
-      ref: "/Versions/main/"
+    ref: "../"
   - name: Getting Started
     ref: "/User/README/README.md"
   - name: Usage
