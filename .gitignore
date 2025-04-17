@@ -483,3 +483,7 @@ deleteme.yaml
 /docs/site/public/
 /contextDir/
 /docs/site/resources/
+/docs/site/.task/checksum/build
+/docs/site/.task/checksum/build-cli-help
+/docs/site/.task/checksum/build-typedoc
+/docs/site/.task/checksum/install-solo
