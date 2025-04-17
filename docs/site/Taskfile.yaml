@@ -7,10 +7,11 @@ silent: false
 env:
   HUGO_ENVIRONMENT: production
   HUGO_ENV: production
-  HUGO_BASE_URL: https://solo.hiero.org/
+  HUGO_BASE_URL: https://solo.hiero.org/{{.CLI_ARGS}}
   HUGO_ORIGIN: https://solo.hiero.org
   HUGO_HOST: solo.hiero.org
   HUGO_BASEPATH: /
+  HUGO_CURRENT_SITE_OUTPUT_DIR: output/{{.CLI_ARGS}}
 
 tasks:
   default:
@@ -19,11 +20,6 @@ tasks:
       - task: "clean"
       - task: "install"
       - task: "build:all"
-
-  start:
-    cmds:
-      - task: "default"
-      - hugo server --disableFastRender --ignoreCache
 
   check-doc-dir:
     status:
@@ -38,21 +34,22 @@ tasks:
 
   clean:
     cmds:
-      - rm -Rf content/Classes
-      - rm -f content/Developer/DEV.md
-      - rm -f content/User/README.md
-      - rm -Rf public
-      - rm -Rf themes
-      - rm -f .hugo_build.lock
+      - rm -Rf current_version_site/content/Classes
+      - rm -f current_version_site/content/Developer/DEV.md
+      - rm -f current_version_site/content/User/README.md
+      - rm -Rf current_version_site/themes
+      - rm -f current_version_site/.hugo_build.lock
+      - rm -Rf $HUGO_CURRENT_SITE_OUTPUT_DIR
 
   build:all:
     cmds:
       - task: "build:typedoc"
       - task: "build:copy"
       - task: "build:cli:help"
+      - task: "build:versions"
       - task: "build:hugo"
 
-  build:
+  build:solo:
     sources:
       - src/**/*.ts
       - version.ts
@@ -73,22 +70,37 @@ tasks:
     generates:
       - dist/**/*.js
     cmds:
-      - rm -f content/User/SoloCommands.md
-      - chmod 755 docs/site/generate_help.sh
-      - task: "build"
-      - docs/site/generate_help.sh
+      - rm -f docs/site/current_version_site/content/User/SoloCommands.md
+      - chmod 755 docs/site/current_version_site/generate_help.sh
+      - task: "build:solo"
+      - docs/site/current_version_site/generate_help.sh
+
+  build:versions:
+    cmds:
+#      - rm -Rf static/Versions/latest
+#      - rm -Rf static/Versions/main
+#      - mkdir -p static/Versions/latest
+#      - cp -r public/* static/Versions/latest/
+#      - mkdir -p static/Versions/main
+#      - cp -r public/* static/Versions/main/
 
   build:hugo:
     cmds:
-      - echo "base_url  $HUGO_BASE_URL"
-      - echo "origin    $HUGO_ORIGIN"
-      - echo "host      $HUGO_HOST"
-      - echo "base_path $HUGO_BASEPATH"
-      - mkdir -p themes/hugo-geekdoc
-      - curl -L https://github.com/thegeeklab/hugo-geekdoc/releases/latest/download/hugo-geekdoc.tar.gz | tar -xz -C themes/hugo-geekdoc/ --strip-components=1
+      - echo "base_url   $HUGO_BASE_URL"
+      - echo "origin     $HUGO_ORIGIN"
+      - echo "host       $HUGO_HOST"
+      - echo "base_path  $HUGO_BASEPATH"
+      - echo "output_dir $HUGO_CURRENT_SITE_OUTPUT_DIR"
+      - mkdir -p current_version_site/themes/hugo-geekdoc
+      - curl -L https://github.com/thegeeklab/hugo-geekdoc/releases/latest/download/hugo-geekdoc.tar.gz | tar -xz -C current_version_site/themes/hugo-geekdoc/ --strip-components=1
       - hugo version
       - hugo config
-      - hugo --gc --minify --baseURL "$HUGO_BASE_URL/"
+      - hugo --gc --minify --baseURL "$HUGO_BASE_URL" --source current_version_site --destination ../$HUGO_CURRENT_SITE_OUTPUT_DIR
+
+  start:
+    cmds:
+      - task: "default"
+      - hugo server --baseURL http://localhost:1313/{{.CLI_ARGS}} --disableFastRender --ignoreCache --source current_version_site --destination ../$HUGO_CURRENT_SITE_OUTPUT_DIR
 
   build:typedoc:
     dir: ../..
@@ -99,18 +111,18 @@ tasks:
     generates:
       - dist/**/*.js
     cmds:
-      - npx typedoc --excludeExternals --out docs/site/public/static/Classes --entryPoints ./solo.ts --entryPoints ./src/index.ts --entryPointStrategy expand ./src
+      - npx typedoc --excludeExternals --out docs/site/$HUGO_CURRENT_SITE_OUTPUT_DIR/static/Classes --entryPoints ./solo.ts --entryPoints ./src/index.ts --entryPointStrategy expand ./src
 
   build:copy:
     cmds:
-      - mkdir -p content/Developer
-      - cp ../../DEV.md content/Developer/DEV.md
-      - mkdir -p content/User
-      - mkdir -p content/User/README
-      - cp ../../README.md content/User/README/README.md
-      - mkdir -p content/User/README/README/images
-      - cp ../../images/DockerDesktop.png content/User/README/README/images/DockerDesktop.png
-      - chmod -R 755 content/User/README
+      - mkdir -p current_version_site/content/Developer
+      - cp ../../DEV.md current_version_site/content/Developer/DEV.md
+      - mkdir -p current_version_site/content/User
+      - mkdir -p current_version_site/content/User/README
+      - cp ../../README.md current_version_site/content/User/README/README.md
+      - mkdir -p current_version_site/content/User/README/README/images
+      - cp ../../images/DockerDesktop.png current_version_site/content/User/README/README/images/DockerDesktop.png
+      - chmod -R 755 current_version_site/content/User/README
 
   install:
     cmds:
