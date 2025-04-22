@@ -479,7 +479,7 @@ deleteme.yaml
 /docs/site/current_version_site/content/User/README.md
 /docs/site/current_version_site/content/User/README
 /docs/site/current_version_site/themes/
-/docs/site/current_version_site/.hugo_build.lock
+**/.hugo_build.lock
 /docs/site/public/
 /contextDir/
 /docs/site/.task/checksum/
@@ -487,3 +487,5 @@ deleteme.yaml
 /docs/site/all_versions_site/main/
 /docs/site/all_versions_site/latest/
 /docs/site/all_versions_site/v*/**
+/docs/site/all_versions_site/static/
+/docs/site/all_versions_site/themes/
