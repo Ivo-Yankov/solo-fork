@@ -26,9 +26,6 @@ vars:
   solo_install_file:
     sh: (echo "/tmp/solo-${USER}-solo-install-$(date +%Y%m%d%H%M%S)")
 
-env:
-  CLUSTER_REF: "kind-{{ .SOLO_CLUSTER_NAME }}"
-
 tasks:
   default:
     deps:
@@ -44,6 +41,7 @@ tasks:
     deps:
       - task: "init"
     cmds:
+#      - task: "cluster:create"
       - task: "solo:init"
       - task: "solo:cluster:setup"
       - task: "solo:cluster-ref:connect"
@@ -208,6 +206,11 @@ tasks:
         else
           export CONTEXT="kind-${SOLO_CLUSTER_NAME}"
         fi
+        if [[ "${CLUSTER_REF}" != "" ]]; then
+          echo "CLUSTER_REF=${CLUSTER_REF}"
+        else
+          export CLUSTER_REF="kind-${SOLO_CLUSTER_NAME}"
+        fi
         SOLO_HOME_DIR=${SOLO_HOME_DIR} npm run solo -- cluster-ref connect --cluster-ref ${CLUSTER_REF} --context ${CONTEXT} --email {{ .SOLO_EMAIL }}
 
   solo:deployment:create:
@@ -217,6 +220,11 @@ tasks:
       - task: "init"
     cmds:
       - |
+        if [[ "${CLUSTER_REF}" != "" ]]; then
+          echo "CLUSTER_REF=${CLUSTER_REF}"
+        else
+          export CLUSTER_REF="kind-${SOLO_CLUSTER_NAME}"
+        fi
         SOLO_HOME_DIR=${SOLO_HOME_DIR} npm run solo -- deployment create -n {{ .SOLO_NAMESPACE }} --deployment "${SOLO_DEPLOYMENT}"
 
   solo:deployment:add-cluster:
@@ -226,6 +234,11 @@ tasks:
       - task: "init"
     cmds:
       - |
+        if [[ "${CLUSTER_REF}" != "" ]]; then
+          echo "CLUSTER_REF=${CLUSTER_REF}"
+        else
+          export CLUSTER_REF="kind-${SOLO_CLUSTER_NAME}"
+        fi
         NODE_COUNT=$(echo "{{ .node_identifiers }}" | awk -F',' '{print NF}')
         echo "NODE_COUNT=${NODE_COUNT}"
         SOLO_HOME_DIR=${SOLO_HOME_DIR} npm run solo -- deployment add-cluster --cluster-ref ${CLUSTER_REF} --deployment "${SOLO_DEPLOYMENT}" --num-consensus-nodes ${NODE_COUNT}
