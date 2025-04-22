@@ -1,0 +1,9 @@
+---
+# https://geekdocs.de/usage/menus/
+main:
+  - name: latest
+    ref: "/latest/"
+    external: true
+  - name: main
+    ref: "/main/"
+    external: true

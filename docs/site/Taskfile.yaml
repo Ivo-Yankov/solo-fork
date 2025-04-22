@@ -46,7 +46,6 @@ tasks:
       - task: "build:typedoc"
       - task: "build:copy"
       - task: "build:cli:help"
-      - task: "build:versions"
       - task: "build:hugo"
 
   build:solo:
@@ -74,15 +73,6 @@ tasks:
       - chmod 755 docs/site/current_version_site/generate_help.sh
       - task: "build:solo"
       - docs/site/current_version_site/generate_help.sh
-
-  build:versions:
-    cmds:
-#      - rm -Rf static/Versions/latest
-#      - rm -Rf static/Versions/main
-#      - mkdir -p static/Versions/latest
-#      - cp -r public/* static/Versions/latest/
-#      - mkdir -p static/Versions/main
-#      - cp -r public/* static/Versions/main/
 
   build:hugo:
     cmds:
@@ -147,3 +137,42 @@ tasks:
       - package-lock.json
     cmds:
       - npm install
+
+  start:all:versions:site:
+    cmds:
+      - task: "clean:all:versions:site"
+      - task: "build:all:versions:site"
+      - hugo server --baseURL http://localhost:1313/ --disableFastRender --ignoreCache --source all_versions_site --destination ../output/public
+
+  all:versions:site:
+    cmds:
+      - task: "clean:all:versions:site"
+      - task: "build:all:versions:site"
+
+  clean:all:versions:site:
+    cmds:
+      - rm -Rf all_versions_site/static/main
+      - rm -Rf all_versions_site/static/latest
+      - rm -Rf all_versions_site/static/v*
+      - rm -Rf output/public
+
+  build:all:versions:site:
+    cmds:
+      - |
+        echo "---" > all_versions_site/data/menu/main.yml
+        echo "# https://geekdocs.de/usage/menus/" >> all_versions_site/data/menu/main.yml
+        echo "main:" >> all_versions_site/data/menu/main.yml
+        echo "  - name: latest" >> all_versions_site/data/menu/main.yml
+        echo "    ref: \"/latest/\"" >> all_versions_site/data/menu/main.yml
+        echo "    external: true" >> all_versions_site/data/menu/main.yml
+        echo "  - name: main" >> all_versions_site/data/menu/main.yml
+        echo "    ref: \"/main/\"" >> all_versions_site/data/menu/main.yml
+        echo "    external: true" >> all_versions_site/data/menu/main.yml
+        mkdir -p all_versions_site/static
+        cp -R output/latest all_versions_site/static/
+        cp -R output/main all_versions_site/static/
+      - mkdir -p all_versions_site/themes/hugo-geekdoc
+      - curl -L https://github.com/thegeeklab/hugo-geekdoc/releases/latest/download/hugo-geekdoc.tar.gz | tar -xz -C all_versions_site/themes/hugo-geekdoc/ --strip-components=1
+      - hugo version
+      - hugo config
+      - hugo --gc --minify --baseURL "$HUGO_BASE_URL" --source all_versions_site --destination ../output/public
