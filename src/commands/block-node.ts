@@ -17,7 +17,7 @@ import {
 } from '../types/aliases.js';
 import {ListrLock} from '../core/lock/listr-lock.js';
 import {
-  type ClusterReference,
+  type ClusterReferenceName,
   type CommandDefinition,
   type DeploymentName,
   type Optional,
@@ -45,7 +45,7 @@ import {MINIMUM_HIERO_PLATFORM_VERSION_FOR_BLOCK_NODE} from '../../version.js';
 interface BlockNodeDeployConfigClass {
   chartVersion: string;
   chartDirectory: string;
-  clusterRef: ClusterReference;
+  clusterRef: ClusterReferenceName;
   deployment: DeploymentName;
   devMode: boolean;
   domainName: Optional<string>;
@@ -66,7 +66,7 @@ interface BlockNodeDeployContext {
 
 interface BlockNodeDestroyConfigClass {
   chartDirectory: string;
-  clusterRef: ClusterReference;
+  clusterRef: ClusterReferenceName;
   deployment: DeploymentName;
   devMode: boolean;
   quiet: boolean;
