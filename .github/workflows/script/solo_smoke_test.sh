@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eo pipefail
+#set -eo pipefail
 
 #
 # This script should be called after solo has been deployed with mirror node and relay node deployed,
@@ -73,7 +73,7 @@ function start_contract_test ()
   result=$?
 
   cd -
-  return 0
+  return $result
 }
 
 function start_sdk_test ()
