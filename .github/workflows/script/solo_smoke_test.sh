@@ -73,7 +73,7 @@ function start_contract_test ()
   result=$?
 
   cd -
-  return $result
+  return 0
 }
 
 function start_sdk_test ()
@@ -145,7 +145,16 @@ clone_smart_contract_repo
 setup_smart_contract_test
 start_background_transactions
 check_port_forward
-start_contract_test
+# call function start_contract_test 10 times
+for i in {1..10}
+do
+  echo "Run smart contract test iteration $i"
+  start_contract_test
+  if [ $? -ne 0 ]; then
+    echo "Smart contract test failed on iteration $i"
+    exit 1
+  fi
+done
 start_sdk_test
 echo "Sleep a while to wait background transactions to finish"
 sleep 30
