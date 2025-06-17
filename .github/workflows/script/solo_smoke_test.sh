@@ -18,7 +18,7 @@ function clone_smart_contract_repo ()
     echo "Directory hedera-smart-contracts exists."
   else
     echo "Directory hedera-smart-contracts does not exist."
-    git clone https://github.com/hashgraph/hedera-smart-contracts --branch only-erc20-tests
+    git clone https://github.com/hashgraph/hedera-smart-contracts --branch erc20-tests-error
   fi
 }
 
@@ -69,7 +69,7 @@ function start_contract_test ()
   echo "Wait a few seconds for background transactions to start"
   sleep 5
   echo "Run smart contract test"
-  npm run hh:test || true
+  npm run hh:test
   result=$?
 
   cd -
