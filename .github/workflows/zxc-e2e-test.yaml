@@ -138,6 +138,7 @@ jobs:
           node-version: ${{ inputs.node-version }}
 
       - name: Install wget
+        if: ${{ runner.os == 'linux }}
         run: |
           if ! command -v wget >/dev/null 2>&1; then
             sudo apt-get update
