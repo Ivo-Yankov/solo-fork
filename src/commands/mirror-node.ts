@@ -269,33 +269,11 @@ export class MirrorNodeCommand extends BaseCommand {
       context_.config.clusterContext,
     );
 
-    if (context_.config.isChartInstalled && semver.gte(context_.config.mirrorNodeVersion, '0.130.0')) {
-      // migrating mirror node passwords from HEDERA_ (version 0.129.0) to HIERO_
-      const existingSecrets = await this.k8Factory
-        .getK8(context_.config.clusterContext)
-        .secrets()
-        .read(context_.config.namespace, 'mirror-passwords');
-      const updatedData: Record<string, string> = {};
-      for (const [key, value] of Object.entries(existingSecrets.data)) {
-        if (key.startsWith('HEDERA_')) {
-          updatedData[key.replace('HEDERA_', 'HIERO_')] = value;
-        } else {
-          updatedData[key] = value;
-        }
-      }
-      if (Object.keys(updatedData).length > 0) {
-        await this.k8Factory
-          .getK8(context_.config.clusterContext)
-          .secrets()
-          .replace(context_.config.namespace, 'mirror-passwords', SecretType.OPAQUE, updatedData);
-      }
-    }
-
     await this.chartManager.upgrade(
       context_.config.namespace,
       constants.MIRROR_NODE_RELEASE_NAME,
       constants.MIRROR_NODE_CHART,
-      constants.MIRROR_NODE_RELEASE_NAME,
+      context_.config.chartDirectory ?? constants.SOLO_TESTING_CHART_URL,
       context_.config.mirrorNodeVersion,
       context_.config.valuesArg,
       context_.config.clusterContext,
