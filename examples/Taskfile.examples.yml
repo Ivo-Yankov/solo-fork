@@ -412,6 +412,7 @@ tasks:
       - kind load docker-image ghcr.io/mhga24/postgres:latest --name "${SOLO_CLUSTER_NAME}"
       - kind load docker-image ghcr.io/mhga24/prom/prometheus:v2.41.0 --name "${SOLO_CLUSTER_NAME}"
       - kind load docker-image haproxytech/haproxy-alpine:2.4.25 --name "${SOLO_CLUSTER_NAME}"
+      - kind load docker-image docker.io/bitnami/postgresql:16.4.0 --name "${SOLO_CLUSTER_NAME}"
 
   cluster:destroy:
     silent: true
