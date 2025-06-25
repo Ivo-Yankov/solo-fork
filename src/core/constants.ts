@@ -26,7 +26,10 @@ export const SOLO_REMOTE_CONFIG_MAX_COMMAND_IN_HISTORY = 50;
 export const SOLO_REMOTE_CONFIGMAP_LABEL_SELECTOR = 'solo.hedera.com/type=remote-config';
 export const NODE_COPY_CONCURRENT = Number(process.env.NODE_COPY_CONCURRENT) || 4;
 export const SKIP_NODE_PING = Boolean(process.env.SKIP_NODE_PING) || false;
+export const DEFAULT_LOCK_ACQUIRE_ATTEMPTS = +process.env.SOLO_LEASE_ACQUIRE_ATTEMPTS || 10;
+export const DEFAULT_LEASE_DURATION = +process.env.SOLO_LEASE_DURATION || 20;
 
+export const SOLO_USER_AGENT_HEADER = 'Solo-User-Agent';
 // --------------- Hedera network and node related constants --------------------------------------------------------------------
 export const HEDERA_CHAIN_ID = process.env.SOLO_CHAIN_ID || '298';
 export const HEDERA_HGCAPP_DIR = '/opt/hgcapp';
@@ -53,9 +56,13 @@ export const HEDERA_NODE_SIDECARS = [
 // --------------- Charts related constants ----------------------------------------------------------------------------
 export const SOLO_SETUP_NAMESPACE = NamespaceName.of('solo-setup');
 
+// TODO: remove after migrated to resources/solo-config.yaml
 export const SOLO_TESTING_CHART_URL = 'oci://ghcr.io/hashgraph/solo-charts';
+// TODO: remove after migrated to resources/solo-config.yaml
 export const SOLO_CLUSTER_SETUP_CHART = 'solo-cluster-setup';
+// TODO: remove after migrated to resources/solo-config.yaml
 export const SOLO_DEPLOYMENT_CHART = 'solo-deployment';
+// TODO: remove after migrated to resources/solo-config.yaml
 export const SOLO_CERT_MANAGER_CHART = 'solo-cert-manager';
 
 export const JSON_RPC_RELAY_CHART_URL =
@@ -67,16 +74,20 @@ export const MIRROR_NODE_CHART_URL =
 export const MIRROR_NODE_CHART = 'hedera-mirror';
 export const MIRROR_NODE_RELEASE_NAME = 'mirror';
 
-export const HEDERA_EXPLORER_CHART_URL =
-  process.env.HEDERA_EXPLORER_CHART_URL ?? 'oci://ghcr.io/hiero-ledger/hiero-mirror-node-explorer/hiero-explorer-chart';
-export const HEDERA_EXPLORER_RELEASE_NAME = 'hiero-explorer';
+export const EXPLORER_CHART_URL =
+  process.env.EXPLORER_CHART_URL ?? 'oci://ghcr.io/hiero-ledger/hiero-mirror-node-explorer/hiero-explorer-chart';
+export const EXPLORER_RELEASE_NAME = 'hiero-explorer';
 export const SOLO_RELAY_LABEL = 'app=hedera-json-rpc-relay';
-export const SOLO_HEDERA_EXPLORER_LABEL = 'app.kubernetes.io/component=hiero-explorer';
+export const SOLO_EXPLORER_LABEL = 'app.kubernetes.io/component=hiero-explorer';
+export const OLD_SOLO_EXPLORER_LABEL = 'app.kubernetes.io/component=hedera-explorer';
 
+// TODO: remove after migrated to resources/solo-config.yaml
 export const INGRESS_CONTROLLER_CHART_URL =
   process.env.INGRESS_CONTROLLER_CHART_URL ?? 'https://haproxy-ingress.github.io/charts';
+// TODO: remove after migrated to resources/solo-config.yaml
 export const INGRESS_CONTROLLER_RELEASE_NAME = 'haproxy-ingress';
 export const EXPLORER_INGRESS_CONTROLLER_RELEASE_NAME = 'explorer-haproxy-ingress';
+// TODO: remove after migrated to resources/solo-config.yaml
 export const INGRESS_CONTROLLER_PREFIX = 'haproxy-ingress.github.io/controller/';
 
 export const BLOCK_NODE_CHART_URL = process.env.BLOCK_NODE_CHART_URL ?? 'oci://ghcr.io/hiero-ledger/hiero-block-node';
@@ -84,6 +95,7 @@ export const BLOCK_NODE_CHART = 'block-node-helm-chart';
 export const BLOCK_NODE_RELEASE_NAME = 'block-node';
 export const BLOCK_NODE_CONTAINER_NAME: ContainerName = ContainerName.of('block-node-helm-chart');
 
+// TODO: remove after migrated to resources/solo-config.yaml
 export const CERT_MANAGER_NAME_SPACE = 'cert-manager';
 export const SOLO_HEDERA_MIRROR_IMPORTER = [
   'app.kubernetes.io/component=importer',
@@ -100,7 +112,7 @@ export const MIRROR_INGRESS_CONTROLLER = 'mirror-ingress-controller';
 export const EXPLORER_INGRESS_CLASS_NAME = 'explorer-ingress-class';
 export const EXPLORER_INGRESS_CONTROLLER = 'explorer-ingress-controller';
 // ------------------- Hedera Account related ---------------------------------------------------------------------------------
-export const DEFAULT_OPERATOR_ID_NUMBER = 2;
+export const DEFAULT_OPERATOR_ID_NUMBER = process.env.SOLO_OPERATOR_ID || 2;
 export const OPERATOR_KEY =
   process.env.SOLO_OPERATOR_KEY ||
   '302e020100300506032b65700422042091132178e72057a1d7528025956fe39b0b847f200ab59b2fdd367017f3087137';
@@ -108,9 +120,9 @@ export const OPERATOR_PUBLIC_KEY =
   process.env.SOLO_OPERATOR_PUBLIC_KEY ||
   '302a300506032b65700321000aa8e21064c61eab86e2a9c164565b4e7a9a4146106e0a6cd03a8c395a110e92';
 
-export const DEFAULT_FREEZE_ID_NUMBER = 58;
+export const DEFAULT_FREEZE_ID_NUMBER = +process.env.FREEZE_ADMIN_ACCOUNT || 58;
 export const DEFAULT_TREASURY_ID_NUMBER = 2;
-export const DEFAULT_START_ID_NUMBER = 3;
+export const DEFAULT_START_ID_NUMBER = +process.env.DEFAULT_START_ID_NUMBER || 3;
 
 export const GENESIS_KEY =
   process.env.GENESIS_KEY ||
@@ -134,7 +146,7 @@ export const POD_CONDITION_READY = 'Ready';
 export const POD_CONDITION_POD_SCHEDULED = 'PodScheduled';
 export const POD_CONDITION_STATUS_TRUE = 'True';
 
-export const EXPLORER_VALUES_FILE = PathEx.joinWithRealPath(RESOURCES_DIR, 'hedera-explorer-values.yaml');
+export const EXPLORER_VALUES_FILE = PathEx.joinWithRealPath(RESOURCES_DIR, 'hiero-explorer-values.yaml');
 export const MIRROR_NODE_VALUES_FILE = PathEx.joinWithRealPath(RESOURCES_DIR, 'mirror-node-values.yaml');
 export const BLOCK_NODE_VALUES_FILE = PathEx.joinWithRealPath(RESOURCES_DIR, 'block-node-values.yaml');
 export const NODE_LOG_FAILURE_MSG = 'failed to download logs from pod';
@@ -158,6 +170,10 @@ export const LISTR_DEFAULT_RENDERER_TIMER_OPTION = {
 export const LISTR_DEFAULT_RENDERER_OPTION = {
   collapseSubtasks: false,
   timer: LISTR_DEFAULT_RENDERER_TIMER_OPTION,
+  persistentOutput: true,
+  collapseErrors: false,
+  showErrorMessage: false,
+  formatOutput: 'wrap',
 } as {
   collapseSubtasks: boolean;
   timer: {
@@ -167,6 +183,10 @@ export const LISTR_DEFAULT_RENDERER_OPTION = {
     args?: [number];
   };
   logger: ListrLogger;
+  persistentOutput: boolean;
+  collapseErrors: boolean;
+  showErrorMessage: boolean;
+  formatOutput: 'wrap' | 'truncate';
 };
 
 export const SIGNING_KEY_PREFIX = 's';
@@ -229,6 +249,8 @@ export const BLOCK_NODE_PODS_RUNNING_DELAY: number = +process.env.BLOCK_NODE_POD
 export const BLOCK_NODE_ACTIVE_MAX_ATTEMPTS: number = +process.env.NETWORK_NODE_ACTIVE_MAX_ATTEMPTS || 100;
 export const BLOCK_NODE_ACTIVE_DELAY: number = +process.env.NETWORK_NODE_ACTIVE_DELAY || 1000;
 export const BLOCK_NODE_ACTIVE_TIMEOUT: number = +process.env.NETWORK_NODE_ACTIVE_TIMEOUT || 1000;
+export const BLOCK_NODE_PORT: number = +process.env.BLOCK_NODE_PORT || 8080;
+export const BLOCK_ITEM_BATCH_SIZE: number = +process.env.BLOCK_ITEM_BATCH_SIZE || 256;
 
 export const GRPC_PORT = +process.env.GRPC_PORT || 50_211;
 export const LOCAL_BUILD_COPY_RETRY = +process.env.LOCAL_BUILD_COPY_RETRY || 3;
@@ -248,6 +270,7 @@ export const BACKUP_SECRET_NAME = 'backup-uploader-secrets';
 export const MIRROR_INGRESS_TLS_SECRET_NAME = 'ca-secret-mirror-node';
 export const EXPLORER_INGRESS_TLS_SECRET_NAME = 'ca-secret-hiero-explorer';
 
+export const BLOCK_NODE_IMAGE_NAME: string = 'block-node-server';
 export const enum StorageType {
   MINIO_ONLY = 'minio_only',
   AWS_ONLY = 'aws_only',

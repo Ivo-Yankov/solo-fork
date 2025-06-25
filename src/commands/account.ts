@@ -8,21 +8,27 @@ import {Flags as flags} from './flags.js';
 import {Listr} from 'listr2';
 import * as constants from '../core/constants.js';
 import * as helpers from '../core/helpers.js';
+import {entityId} from '../core/helpers.js';
 import {type AccountManager} from '../core/account-manager.js';
 import {type AccountId, AccountInfo, HbarUnit, Long, NodeUpdateTransaction, PrivateKey} from '@hashgraph/sdk';
 import {ListrLock} from '../core/lock/listr-lock.js';
-import {type ArgvStruct, type AnyYargs, type NodeAliases} from '../types/aliases.js';
+import {type AnyYargs, type ArgvStruct, type NodeAliases} from '../types/aliases.js';
 import {resolveNamespaceFromDeployment} from '../core/resolvers.js';
 import {type NamespaceName} from '../types/namespace/namespace-name.js';
-import {type ClusterReference, type DeploymentName, type Realm, type Shard} from '../types/index.js';
-import {type CommandDefinition, type SoloListrTask} from '../types/index.js';
+import {
+  type ClusterReferenceName,
+  type CommandDefinition,
+  type DeploymentName,
+  type Realm,
+  type Shard,
+  type SoloListrTask,
+} from '../types/index.js';
 import {Templates} from '../core/templates.js';
 import {SecretType} from '../integration/kube/resources/secret/secret-type.js';
 import {Base64} from 'js-base64';
 import {inject, injectable} from 'tsyringe-neo';
 import {InjectTokens} from '../core/dependency-injection/inject-tokens.js';
 import {patchInject} from '../core/dependency-injection/container-helper.js';
-import {entityId} from '../core/helpers.js';
 
 interface UpdateAccountConfig {
   accountId: string;
@@ -31,7 +37,7 @@ interface UpdateAccountConfig {
   deployment: DeploymentName;
   ecdsaPrivateKey: string;
   ed25519PrivateKey: string;
-  clusterRef: ClusterReference;
+  clusterRef: ClusterReferenceName;
   contextName: string;
 }
 
@@ -221,7 +227,7 @@ export class AccountCommand extends BaseCommand {
     interface Config {
       namespace: NamespaceName;
       nodeAliases: NodeAliases;
-      clusterRef: ClusterReference;
+      clusterRef: ClusterReferenceName;
       deployment: DeploymentName;
       contextName: string;
     }
@@ -248,17 +254,18 @@ export class AccountCommand extends BaseCommand {
 
             const config = {
               deployment: self.configManager.getFlag<DeploymentName>(flags.deployment),
-              clusterRef: self.configManager.getFlag(flags.clusterRef) as ClusterReference,
+              clusterRef: self.configManager.getFlag(flags.clusterRef) as ClusterReferenceName,
               namespace: await resolveNamespaceFromDeployment(this.localConfig, this.configManager, task),
               nodeAliases: helpers.parseNodeAliases(
                 this.configManager.getFlag(flags.nodeAliasesUnparsed),
-                this.remoteConfigManager.getConsensusNodes(),
+                this.remoteConfig.getConsensusNodes(),
                 this.configManager,
               ),
             } as Config;
 
             config.contextName =
-              this.localConfig.clusterRefs.get(config.clusterRef) ?? self.k8Factory.default().contexts().readCurrent();
+              this.localConfig.configuration.clusterRefs.get(config.clusterRef)?.toString() ??
+              self.k8Factory.default().contexts().readCurrent();
 
             if (!(await this.k8Factory.getK8(config.contextName).namespaces().has(config.namespace))) {
               throw new SoloError(`namespace ${config.namespace.name} does not exist`);
@@ -271,7 +278,7 @@ export class AccountCommand extends BaseCommand {
 
             await self.accountManager.loadNodeClient(
               config.namespace,
-              self.remoteConfigManager.getClusterRefs(),
+              self.remoteConfig.getClusterRefs(),
               self.configManager.getFlag<DeploymentName>(flags.deployment),
               self.configManager.getFlag<boolean>(flags.forcePortForward),
             );
@@ -310,8 +317,8 @@ export class AccountCommand extends BaseCommand {
                   title: 'Update special account key sets',
                   task: context_ => {
                     const subTasks: SoloListrTask<Context>[] = [];
-                    const realm: Realm = this.localConfig.getRealm(context_.config.deployment);
-                    const shard: Shard = this.localConfig.getShard(context_.config.deployment);
+                    const realm: Realm = this.localConfig.configuration.realmForDeployment(context_.config.deployment);
+                    const shard: Shard = this.localConfig.configuration.shardForDeployment(context_.config.deployment);
 
                     for (const currentSet of context_.accountsBatchedSet) {
                       const accountStart = entityId(shard, realm, currentSet[0]);
@@ -352,7 +359,7 @@ export class AccountCommand extends BaseCommand {
                       const nodeId = Templates.nodeIdFromNodeAlias(nodeAlias);
                       const nodeClient = await self.accountManager.refreshNodeClient(
                         context_.config.namespace,
-                        self.remoteConfigManager.getClusterRefs(),
+                        self.remoteConfig.getClusterRefs(),
                         nodeAlias,
                         context_.config.deployment,
                       );
@@ -463,7 +470,7 @@ export class AccountCommand extends BaseCommand {
       generateEcdsaKey: boolean;
       createAmount: number;
       contextName: string;
-      clusterRef: ClusterReference;
+      clusterRef: ClusterReferenceName;
     }
 
     interface Context {
@@ -489,11 +496,12 @@ export class AccountCommand extends BaseCommand {
               setAlias: self.configManager.getFlag<boolean>(flags.setAlias),
               generateEcdsaKey: self.configManager.getFlag<boolean>(flags.generateEcdsaKey),
               createAmount: self.configManager.getFlag<number>(flags.createAmount),
-              clusterRef: self.configManager.getFlag<ClusterReference>(flags.clusterRef),
+              clusterRef: self.configManager.getFlag<ClusterReferenceName>(flags.clusterRef),
             } as Config;
 
             config.contextName =
-              this.localConfig.clusterRefs.get(config.clusterRef) ?? self.k8Factory.default().contexts().readCurrent();
+              this.localConfig.configuration.clusterRefs.get(config.clusterRef)?.toString() ??
+              self.k8Factory.default().contexts().readCurrent();
 
             if (!config.amount) {
               config.amount = flags.amount.definition.defaultValue as number;
@@ -510,7 +518,7 @@ export class AccountCommand extends BaseCommand {
 
             await self.accountManager.loadNodeClient(
               context_.config.namespace,
-              self.remoteConfigManager.getClusterRefs(),
+              self.remoteConfig.getClusterRefs(),
               config.deployment,
               self.configManager.getFlag<boolean>(flags.forcePortForward),
             );
@@ -584,11 +592,12 @@ export class AccountCommand extends BaseCommand {
               deployment: self.configManager.getFlag<DeploymentName>(flags.deployment),
               ecdsaPrivateKey: self.configManager.getFlag(flags.ecdsaPrivateKey),
               ed25519PrivateKey: self.configManager.getFlag(flags.ed25519PrivateKey),
-              clusterRef: self.configManager.getFlag<ClusterReference>(flags.clusterRef),
+              clusterRef: self.configManager.getFlag<ClusterReferenceName>(flags.clusterRef),
             } as UpdateAccountConfig;
 
             config.contextName =
-              this.localConfig.clusterRefs.get(config.clusterRef) ?? self.k8Factory.default().contexts().readCurrent();
+              this.localConfig.configuration.clusterRefs.get(config.clusterRef)?.toString() ??
+              self.k8Factory.default().contexts().readCurrent();
 
             if (!(await this.k8Factory.getK8(config.contextName).namespaces().has(config.namespace))) {
               throw new SoloError(`namespace ${config.namespace} does not exist`);
@@ -599,7 +608,7 @@ export class AccountCommand extends BaseCommand {
 
             await self.accountManager.loadNodeClient(
               config.namespace,
-              self.remoteConfigManager.getClusterRefs(),
+              self.remoteConfig.getClusterRefs(),
               config.deployment,
               self.configManager.getFlag<boolean>(flags.forcePortForward),
             );
@@ -662,7 +671,7 @@ export class AccountCommand extends BaseCommand {
       namespace: NamespaceName;
       privateKey: boolean;
       deployment: DeploymentName;
-      clusterRef: ClusterReference;
+      clusterRef: ClusterReferenceName;
       contextName: string;
     }
 
@@ -685,11 +694,12 @@ export class AccountCommand extends BaseCommand {
               namespace: await resolveNamespaceFromDeployment(this.localConfig, this.configManager, task),
               deployment: self.configManager.getFlag<DeploymentName>(flags.deployment),
               privateKey: self.configManager.getFlag<boolean>(flags.privateKey),
-              clusterRef: self.configManager.getFlag<ClusterReference>(flags.clusterRef),
+              clusterRef: self.configManager.getFlag<ClusterReferenceName>(flags.clusterRef),
             } as Config;
 
             config.contextName =
-              this.localConfig.clusterRefs.get(config.clusterRef) ?? self.k8Factory.default().contexts().readCurrent();
+              this.localConfig.configuration.clusterRefs.get(config.clusterRef)?.toString() ??
+              self.k8Factory.default().contexts().readCurrent();
 
             if (!(await this.k8Factory.getK8(config.contextName).namespaces().has(config.namespace))) {
               throw new SoloError(`namespace ${config.namespace} does not exist`);
@@ -700,7 +710,7 @@ export class AccountCommand extends BaseCommand {
 
             await self.accountManager.loadNodeClient(
               config.namespace,
-              self.remoteConfigManager.getClusterRefs(),
+              self.remoteConfig.getClusterRefs(),
               config.deployment,
               self.configManager.getFlag<boolean>(flags.forcePortForward),
             );

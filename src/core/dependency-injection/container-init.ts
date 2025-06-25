@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import {container} from 'tsyringe-neo';
+import {container, type DependencyContainer} from 'tsyringe-neo';
 import {type SoloLogger} from '../logging/solo-logger.js';
 import {PackageDownloader} from '../package-downloader.js';
 import {Zippy} from '../zippy.js';
@@ -16,7 +16,6 @@ import {ProfileManager} from '../profile-manager.js';
 import {IntervalLockRenewalService} from '../lock/interval-lock-renewal.js';
 import {LockManager} from '../lock/lock-manager.js';
 import {CertificateManager} from '../certificate-manager.js';
-import {RemoteConfigManager} from '../config/remote/remote-config-manager.js';
 import os from 'node:os';
 import * as version from '../../../version.js';
 import {NetworkNodes} from '../network-nodes.js';
@@ -30,7 +29,7 @@ import {NodeCommandTasks} from '../../commands/node/tasks.js';
 import {ClusterCommandConfigs} from '../../commands/cluster/configs.js';
 import {NodeCommandConfigs} from '../../commands/node/configs.js';
 import {ErrorHandler} from '../error-handler.js';
-import {CTObjectMapper} from '../../data/mapper/impl/ct-object-mapper.js';
+import {ClassToObjectMapper} from '../../data/mapper/impl/class-to-object-mapper.js';
 import {HelmExecutionBuilder} from '../../integration/helm/execution/helm-execution-builder.js';
 import {DefaultHelmClient} from '../../integration/helm/impl/default-helm-client.js';
 import {HelpRenderer} from '../help-renderer.js';
@@ -50,24 +49,33 @@ import {SoloWinstonLogger} from '../logging/solo-winston-logger.js';
 import {SingletonContainer} from './singleton-container.js';
 import {ValueContainer} from './value-container.js';
 import {BlockNodeCommand} from '../../commands/block-node.js';
+import {LocalConfigRuntimeState} from '../../business/runtime-state/config/local/local-config-runtime-state.js';
+import {LocalConfigSource} from '../../data/configuration/impl/local-config-source.js';
+import {RemoteConfigRuntimeState} from '../../business/runtime-state/config/remote/remote-config-runtime-state.js';
+import {ComponentFactory} from '../config/remote/component-factory.js';
+import {RemoteConfigValidator} from '../config/remote/remote-config-validator.js';
+import {type ConfigProvider} from '../../data/configuration/api/config-provider.js';
+import {DefaultConfigSource} from '../../data/configuration/impl/default-config-source.js';
+import {type SoloConfigSchema} from '../../data/schema/model/solo/solo-config-schema.js';
+import {SoloConfigSchemaDefinition} from '../../data/schema/migration/impl/solo/solo-config-schema-definition.js';
+import {BeanFactorySupplier} from './bean-factory-supplier.js';
+import {QuickStartCommandDefault} from '../../commands/quick-start-default.js';
 
 export type InstanceOverrides = Map<symbol, SingletonContainer | ValueContainer>;
-import {LocalConfigRuntimeState} from '../../business/runtime-state/local-config-runtime-state.js';
-import {LocalConfigSource} from '../../data/configuration/impl/local-config-source.js';
 
 /**
  * Container class to manage the dependency injection container
  */
 export class Container {
-  private static instance: Container = null;
-  private static isInitialized = false;
+  private static instance: Container = undefined;
+  private static isInitialized: boolean = false;
 
   private constructor() {}
 
   /**
    * Get the singleton instance of the container
    */
-  public static getInstance() {
+  public static getInstance(): Container {
     if (!Container.instance) {
       Container.instance = new Container();
     }
@@ -75,27 +83,8 @@ export class Container {
     return Container.instance;
   }
 
-  /**
-   * Initialize the container with the default dependencies
-   * @param homeDirectory - the home directory to use, defaults to constants.SOLO_HOME_DIR
-   * @param cacheDirectory - the cache directory to use, defaults to constants.SOLO_CACHE_DIR
-   * @param logLevel - the log level to use, defaults to 'debug'
-   * @param developmentMode - if true, show full stack traces in error messages
-   * @param overrides - instances to use instead of the default implementations
-   */
-  public init(
-    homeDirectory: string = constants.SOLO_HOME_DIR,
-    cacheDirectory: string = constants.SOLO_CACHE_DIR,
-    logLevel: string = 'debug',
-    developmentMode: boolean = false,
-    overrides: InstanceOverrides = new Map<symbol, SingletonContainer | ValueContainer>(),
-  ) {
-    if (Container.isInitialized) {
-      container.resolve<SoloLogger>(InjectTokens.SoloLogger).debug('Container already initialized');
-      return;
-    }
-
-    const singletonContainers: SingletonContainer[] = [
+  private static singletonContainers(): SingletonContainer[] {
+    return [
       new SingletonContainer(InjectTokens.SoloLogger, SoloWinstonLogger),
       new SingletonContainer(InjectTokens.LockRenewalService, IntervalLockRenewalService),
       new SingletonContainer(InjectTokens.LockManager, LockManager),
@@ -115,7 +104,7 @@ export class Container {
       new SingletonContainer(InjectTokens.CertificateManager, CertificateManager),
       new SingletonContainer(InjectTokens.LocalConfigRuntimeState, LocalConfigRuntimeState),
       new SingletonContainer(InjectTokens.LocalConfigSource, LocalConfigSource),
-      new SingletonContainer(InjectTokens.RemoteConfigManager, RemoteConfigManager),
+      new SingletonContainer(InjectTokens.RemoteConfigRuntimeState, RemoteConfigRuntimeState),
       new SingletonContainer(InjectTokens.ClusterChecks, ClusterChecks),
       new SingletonContainer(InjectTokens.NetworkNodes, NetworkNodes),
       new SingletonContainer(InjectTokens.Middlewares, Middlewares),
@@ -138,10 +127,20 @@ export class Container {
       new SingletonContainer(InjectTokens.ClusterCommandConfigs, ClusterCommandConfigs),
       new SingletonContainer(InjectTokens.NodeCommandConfigs, NodeCommandConfigs),
       new SingletonContainer(InjectTokens.ErrorHandler, ErrorHandler),
-      new SingletonContainer(InjectTokens.ObjectMapper, CTObjectMapper),
+      new SingletonContainer(InjectTokens.ObjectMapper, ClassToObjectMapper),
+      new SingletonContainer(InjectTokens.ComponentFactory, ComponentFactory),
+      new SingletonContainer(InjectTokens.RemoteConfigValidator, RemoteConfigValidator),
+      new SingletonContainer(InjectTokens.QuickStartCommand, QuickStartCommandDefault),
     ];
+  }
 
-    const valueContainers: ValueContainer[] = [
+  private static valueContainers(
+    homeDirectory: string = constants.SOLO_HOME_DIR,
+    cacheDirectory: string = constants.SOLO_CACHE_DIR,
+    logLevel: string = 'debug',
+    developmentMode: boolean = false,
+  ): ValueContainer[] {
+    return [
       new ValueContainer(InjectTokens.LogLevel, logLevel),
       new ValueContainer(InjectTokens.DevelopmentMode, developmentMode),
       new ValueContainer(InjectTokens.HomeDirectory, homeDirectory),
@@ -154,6 +153,58 @@ export class Container {
       new ValueContainer(InjectTokens.LocalConfigFileName, constants.DEFAULT_LOCAL_CONFIG_FILE),
       new ValueContainer(InjectTokens.KeyFormatter, ConfigKeyFormatter.instance()),
     ];
+  }
+
+  private static factorySuppliers(): BeanFactorySupplier<unknown>[] {
+    return [
+      new BeanFactorySupplier<ConfigProvider>(
+        InjectTokens.ConfigProvider,
+        (container: DependencyContainer): ConfigProvider => {
+          const objectMapper: ClassToObjectMapper = container.resolve<ClassToObjectMapper>(InjectTokens.ObjectMapper);
+
+          const defaultConfigSource: DefaultConfigSource<SoloConfigSchema> = new DefaultConfigSource<SoloConfigSchema>(
+            'solo-config.yaml',
+            PathEx.join('resources', 'config'),
+            new SoloConfigSchemaDefinition(objectMapper),
+            objectMapper,
+          );
+
+          const provider: ConfigProvider = new LayeredConfigProvider(objectMapper);
+          provider.builder().withDefaultSources().withSources(defaultConfigSource).withMergeSourceValues(true).build();
+          return provider;
+        },
+      ),
+    ];
+  }
+
+  /**
+   * Initialize the container with the default dependencies
+   * @param homeDirectory - the home directory to use, defaults to constants.SOLO_HOME_DIR
+   * @param cacheDirectory - the cache directory to use, defaults to constants.SOLO_CACHE_DIR
+   * @param logLevel - the log level to use, defaults to 'debug'
+   * @param developmentMode - if true, show full stack traces in error messages
+   * @param overrides - instances to use instead of the default implementations
+   */
+  public init(
+    homeDirectory: string = constants.SOLO_HOME_DIR,
+    cacheDirectory: string = constants.SOLO_CACHE_DIR,
+    logLevel: string = 'debug',
+    developmentMode: boolean = false,
+    overrides: InstanceOverrides = new Map<symbol, SingletonContainer | ValueContainer>(),
+  ): void {
+    if (Container.isInitialized) {
+      container.resolve<SoloLogger>(InjectTokens.SoloLogger).debug('Container already initialized');
+      return;
+    }
+
+    const singletonContainers: SingletonContainer[] = Container.singletonContainers();
+
+    const valueContainers: ValueContainer[] = Container.valueContainers(
+      homeDirectory,
+      cacheDirectory,
+      logLevel,
+      developmentMode,
+    );
 
     for (const [token, override] of overrides) {
       if (override instanceof SingletonContainer) {
@@ -175,6 +226,10 @@ export class Container {
       }
     }
 
+    for (const supplier of Container.factorySuppliers()) {
+      supplier.register(container);
+    }
+
     container.resolve<SoloLogger>(InjectTokens.SoloLogger).debug('Container initialized');
     Container.isInitialized = true;
   }
@@ -193,7 +248,7 @@ export class Container {
     logLevel?: string,
     developmentMode?: boolean,
     overrides?: InstanceOverrides,
-  ) {
+  ): void {
     if (Container.instance && Container.isInitialized) {
       container.resolve<SoloLogger>(InjectTokens.SoloLogger).debug('Resetting container');
       container.reset();
@@ -216,7 +271,7 @@ export class Container {
     logLevel?: string,
     developmentMode?: boolean,
     overrides?: InstanceOverrides,
-  ) {
+  ): void {
     if (Container.instance && Container.isInitialized) {
       container.clearInstances();
       Container.isInitialized = false;
@@ -228,7 +283,7 @@ export class Container {
   /**
    * only call dispose when you are about to system exit
    */
-  public async dispose() {
+  public async dispose(): Promise<void> {
     await container.dispose();
   }
 }

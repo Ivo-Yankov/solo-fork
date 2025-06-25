@@ -23,6 +23,7 @@ import {Argv} from '../../helpers/argv-wrapper.js';
 import {type Pod} from '../../../src/integration/kube/resources/pod/pod.js';
 import {NodeCommand} from '../../../src/commands/node/index.js';
 import {AccountCommand} from '../../../src/commands/account.js';
+import {AccountId} from '@hashgraph/sdk';
 
 const namespace = NamespaceName.of('node-delete');
 const deleteNodeAlias = 'node1';
@@ -39,10 +40,13 @@ argv.setArg(flags.namespace, namespace.name);
 argv.setArg(flags.realm, hederaPlatformSupportsNonZeroRealms() ? 65_535 : 0);
 argv.setArg(flags.shard, 0);
 
+let updateAcccountId: AccountId;
+let updateAcccountPrivateKey: string;
+
 endToEndTestSuite(namespace.name, argv, {}, bootstrapResp => {
   describe('Node delete', async () => {
     const {
-      opts: {k8Factory, commandInvoker, accountManager, remoteConfigManager, logger},
+      opts: {k8Factory, commandInvoker, accountManager, remoteConfig, logger},
       cmd: {nodeCmd, accountCmd},
     } = bootstrapResp;
 
@@ -79,12 +83,18 @@ endToEndTestSuite(namespace.name, argv, {}, bootstrapResp => {
         subcommand: 'create',
         callback: async argv => accountCmd.create(argv),
       });
+
+      // Create a new account to update the node account id
+      // @ts-expect-error - TS2341: to access private property
+      const newAccountInfo = accountCmd.accountInfo;
+      updateAcccountId = AccountId.fromString(newAccountInfo.accountId);
+      updateAcccountPrivateKey = newAccountInfo.privateKey;
     });
 
     it('should be able to update a node after node delete', async () => {
-      argv.setArg(flags.newAccountNumber, '0.0.7');
+      argv.setArg(flags.newAccountNumber, updateAcccountId.toString());
       argv.setArg(flags.nodeAlias, updateNodeAlias);
-
+      argv.setArg(flags.newAdminKey, updateAcccountPrivateKey);
       await commandInvoker.invoke({
         argv: argv,
         command: NodeCommand.COMMAND_NAME,
@@ -95,9 +105,9 @@ endToEndTestSuite(namespace.name, argv, {}, bootstrapResp => {
       await accountManager.close();
     }).timeout(Duration.ofMinutes(30).toMillis());
 
-    balanceQueryShouldSucceed(accountManager, namespace, remoteConfigManager, logger, deleteNodeAlias);
+    balanceQueryShouldSucceed(accountManager, namespace, remoteConfig, logger, deleteNodeAlias);
 
-    accountCreationShouldSucceed(accountManager, namespace, remoteConfigManager, logger, deleteNodeAlias);
+    accountCreationShouldSucceed(accountManager, namespace, remoteConfig, logger, deleteNodeAlias);
 
     it('deleted consensus node should not be running', async () => {
       // read config.txt file from first node, read config.txt line by line, it should not contain value of nodeAlias

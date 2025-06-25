@@ -46,7 +46,7 @@ export class ChartManager {
       }
 
       return await Promise.all(promises); // urls
-    } catch (error: Error | any) {
+    } catch (error) {
       throw new SoloError(`failed to setup chart repositories: ${error.message}`, error);
     }
   }
@@ -146,13 +146,14 @@ export class ChartManager {
     version = '',
     valuesArgument = '',
     kubeContext?: string,
+    reuseValues?: boolean,
   ) {
     try {
       this.logger.debug(chalk.cyan('> upgrading chart:'), chalk.yellow(`${chartReleaseName}`));
       const options: UpgradeChartOptions = new UpgradeChartOptions(
         namespaceName.name,
         kubeContext,
-        true,
+        reuseValues ?? true,
         valuesArgument,
         version,
       );

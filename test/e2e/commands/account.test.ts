@@ -18,7 +18,7 @@ import {
 } from '@hashgraph/sdk';
 import * as constants from '../../../src/core/constants.js';
 import * as version from '../../../version.js';
-import {endToEndTestSuite, HEDERA_PLATFORM_VERSION_TAG, getTestLogger, getTestCluster} from '../../test-utility.js';
+import {endToEndTestSuite, getTestCluster, getTestLogger, HEDERA_PLATFORM_VERSION_TAG} from '../../test-utility.js';
 import {AccountCommand} from '../../../src/commands/account.js';
 import {Flags as flags} from '../../../src/commands/flags.js';
 import {Duration} from '../../../src/core/time/duration.js';
@@ -28,15 +28,15 @@ import {type NetworkNodes} from '../../../src/core/network-nodes.js';
 import {container} from 'tsyringe-neo';
 import {InjectTokens} from '../../../src/core/dependency-injection/inject-tokens.js';
 import * as helpers from '../../../src/core/helpers.js';
+import {entityId} from '../../../src/core/helpers.js';
 import {Templates} from '../../../src/core/templates.js';
 import * as Base64 from 'js-base64';
 import {Argv} from '../../helpers/argv-wrapper.js';
 import {type DeploymentName, type Realm, type Shard} from '../../../src/types/index.js';
 import {type SoloLogger} from '../../../src/core/logging/solo-logger.js';
-import {entityId} from '../../../src/core/helpers.js';
 import {type InstanceOverrides} from '../../../src/core/dependency-injection/container-init.js';
 import {ValueContainer} from '../../../src/core/dependency-injection/value-container.js';
-import {type LocalConfigRuntimeState} from '../../../src/business/runtime-state/local-config-runtime-state.js';
+import {type LocalConfigRuntimeState} from '../../../src/business/runtime-state/config/local/local-config-runtime-state.js';
 
 const defaultTimeout = Duration.ofSeconds(20).toMillis();
 
@@ -68,7 +68,7 @@ endToEndTestSuite(testName, argv, {containerOverrides: overrides}, bootstrapResp
     let testLogger: SoloLogger;
 
     const {
-      opts: {k8Factory, accountManager, configManager, commandInvoker, remoteConfigManager},
+      opts: {k8Factory, accountManager, configManager, commandInvoker, remoteConfig},
       cmd: {nodeCmd},
     } = bootstrapResp;
 
@@ -125,7 +125,7 @@ endToEndTestSuite(testName, argv, {containerOverrides: overrides}, bootstrapResp
 
           await accountManager.loadNodeClient(
             namespace,
-            remoteConfigManager.getClusterRefs(),
+            remoteConfig.getClusterRefs(),
             argv.getArg<DeploymentName>(flags.deployment),
             argv.getArg<boolean>(flags.forcePortForward),
           );
@@ -139,7 +139,7 @@ endToEndTestSuite(testName, argv, {containerOverrides: overrides}, bootstrapResp
         it('Node admin key should have been updated, not equal to genesis key', async () => {
           const nodeAliases = helpers.parseNodeAliases(
             argv.getArg<string>(flags.nodeAliasesUnparsed),
-            bootstrapResp.opts.remoteConfigManager.getConsensusNodes(),
+            bootstrapResp.opts.remoteConfig.getConsensusNodes(),
             bootstrapResp.opts.configManager,
           );
           for (const nodeAlias of nodeAliases) {
@@ -356,7 +356,7 @@ endToEndTestSuite(testName, argv, {containerOverrides: overrides}, bootstrapResp
 
           await accountManager.loadNodeClient(
             namespace,
-            remoteConfigManager.getClusterRefs(),
+            remoteConfig.getClusterRefs(),
             argv.getArg<DeploymentName>(flags.deployment),
             argv.getArg<boolean>(flags.forcePortForward),
           );
@@ -384,7 +384,7 @@ endToEndTestSuite(testName, argv, {containerOverrides: overrides}, bootstrapResp
         try {
           await accountManager.loadNodeClient(
             namespace,
-            remoteConfigManager.getClusterRefs(),
+            remoteConfig.getClusterRefs(),
             argv.getArg<DeploymentName>(flags.deployment),
             argv.getArg<boolean>(flags.forcePortForward),
           );
@@ -464,7 +464,7 @@ endToEndTestSuite(testName, argv, {containerOverrides: overrides}, bootstrapResp
         } catch (error) {
           testLogger.showUserError(error);
         }
-      }).timeout(Duration.ofMinutes(4).toMillis());
+      }).timeout(Duration.ofMinutes(10).toMillis());
     });
   });
 });

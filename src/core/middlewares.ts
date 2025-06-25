@@ -7,33 +7,29 @@ import {type NamespaceName} from '../types/namespace/namespace-name.js';
 import {type ConfigManager} from './config-manager.js';
 import {type K8Factory} from '../integration/kube/k8-factory.js';
 import {type SoloLogger} from './logging/solo-logger.js';
-import {type AnyObject} from '../types/aliases.js';
-import {type RemoteConfigManager} from './config/remote/remote-config-manager.js';
-import {type ClusterReference} from './../types/index.js';
+import {type AnyObject, ArgvStruct} from '../types/aliases.js';
+import {type ClusterReferenceName} from './../types/index.js';
 import {SoloError} from './errors/solo-error.js';
 import {SilentBreak} from './errors/silent-break.js';
 import {type HelpRenderer} from './help-renderer.js';
 import {patchInject} from './dependency-injection/container-helper.js';
 import {InjectTokens} from './dependency-injection/inject-tokens.js';
 import {inject, injectable} from 'tsyringe-neo';
-import {LocalConfigRuntimeState} from '../business/runtime-state/local-config-runtime-state.js';
+import {LocalConfigRuntimeState} from '../business/runtime-state/config/local/local-config-runtime-state.js';
+import {type RemoteConfigRuntimeStateApi} from '../business/runtime-state/api/remote-config-runtime-state-api.js';
 
 @injectable()
 export class Middlewares {
   constructor(
     @inject(InjectTokens.ConfigManager) private readonly configManager: ConfigManager,
-    @inject(InjectTokens.RemoteConfigManager) private readonly remoteConfigManager: RemoteConfigManager,
+    @inject(InjectTokens.RemoteConfigRuntimeState) private readonly remoteConfig: RemoteConfigRuntimeStateApi,
     @inject(InjectTokens.K8Factory) private readonly k8Factory: K8Factory,
     @inject(InjectTokens.SoloLogger) private readonly logger: SoloLogger,
     @inject(InjectTokens.LocalConfigRuntimeState) private readonly localConfig: LocalConfigRuntimeState,
     @inject(InjectTokens.HelpRenderer) private readonly helpRenderer: HelpRenderer,
   ) {
     this.configManager = patchInject(configManager, InjectTokens.ConfigManager, this.constructor.name);
-    this.remoteConfigManager = patchInject(
-      remoteConfigManager,
-      InjectTokens.RemoteConfigManager,
-      this.constructor.name,
-    );
+    this.remoteConfig = patchInject(remoteConfig, InjectTokens.RemoteConfigRuntimeState, this.constructor.name);
     this.k8Factory = patchInject(k8Factory, InjectTokens.K8Factory, this.constructor.name);
     this.logger = patchInject(logger, InjectTokens.SoloLogger, this.constructor.name);
     this.localConfig = patchInject(localConfig, InjectTokens.LocalConfigRuntimeState, this.constructor.name);
@@ -46,7 +42,7 @@ export class Middlewares {
     /**
      * @param argv - listr Argv
      */
-    return (argv: any) => {
+    return (argv: any): void => {
       if (!argv['help']) {
         return;
       }
@@ -58,8 +54,8 @@ export class Middlewares {
     };
   }
 
-  public setLoggerDevFlag() {
-    const logger = this.logger;
+  public setLoggerDevFlag(): (argv: ArgvStruct) => AnyObject {
+    const logger: SoloLogger = this.logger;
 
     /**
      * @param argv - listr Argv
@@ -80,9 +76,9 @@ export class Middlewares {
    * @returns callback function to be executed from listr
    */
   public processArgumentsAndDisplayHeader() {
-    const k8Factory = this.k8Factory;
-    const configManager = this.configManager;
-    const logger = this.logger;
+    const k8Factory: K8Factory = this.k8Factory;
+    const configManager: ConfigManager = this.configManager;
+    const logger: SoloLogger = this.logger;
 
     /**
      * @param argv - listr Argv
@@ -103,7 +99,7 @@ export class Middlewares {
         configManager.reset();
       }
 
-      const clusterName = configManager.getFlag<ClusterReference>(flags.clusterRef) || currentClusterName;
+      const clusterName = configManager.getFlag<ClusterReferenceName>(flags.clusterRef) || currentClusterName;
 
       // Set namespace if not provided
       if (contextNamespace?.name) {
@@ -144,7 +140,7 @@ export class Middlewares {
    * @returns callback function to be executed from listr
    */
   public loadRemoteConfig() {
-    const remoteConfigManager = this.remoteConfigManager;
+    const remoteConfig = this.remoteConfig;
     const logger = this.logger;
 
     /**
@@ -158,6 +154,7 @@ export class Middlewares {
 
       const skip =
         command === 'init' ||
+        command === 'quick-start' ||
         (command === 'cluster-ref' && subCommand === 'connect') ||
         (command === 'cluster-ref' && subCommand === 'disconnect') ||
         (command === 'cluster-ref' && subCommand === 'info') ||
@@ -174,7 +171,7 @@ export class Middlewares {
       const skipConsensusNodeValidation = command === 'network' && subCommand === 'deploy';
 
       if (!skip) {
-        await remoteConfigManager.loadAndValidate(argv, validateRemoteConfig, skipConsensusNodeValidation);
+        await remoteConfig.loadAndValidate(argv, validateRemoteConfig, skipConsensusNodeValidation);
       }
 
       return argv;
@@ -189,7 +186,7 @@ export class Middlewares {
   public loadLocalConfig() {
     return async (argv: any): Promise<AnyObject> => {
       const command: string = argv._[0];
-      const runMiddleware: boolean = command !== 'init';
+      const runMiddleware: boolean = command !== 'init' && command !== 'quick-start';
 
       if (runMiddleware) {
         this.logger.debug('Loading local config');
@@ -205,7 +202,7 @@ export class Middlewares {
    * @returns callback function to be executed from listr
    */
   public checkIfInitialized() {
-    const logger = this.logger;
+    const logger: SoloLogger = this.logger;
 
     /**
      * @param argv - listr Argv
@@ -213,8 +210,8 @@ export class Middlewares {
     return async (argv: any): Promise<AnyObject> => {
       logger.debug('Checking if local config exists');
 
-      const command = argv._[0];
-      const allowMissingLocalConfig = command === 'init';
+      const command: any = argv._[0];
+      const allowMissingLocalConfig: boolean = command === 'init' || command === 'quick-start';
 
       if (!allowMissingLocalConfig && !this.localConfig.configFileExists()) {
         throw new SoloError('Please run `solo init` to create required files');
