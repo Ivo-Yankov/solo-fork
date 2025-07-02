@@ -40,6 +40,9 @@ export OPERATOR_KEY=$(grep "privateKey" test.log | grep -v "privateKeyRaw" | awk
 echo "OPERATOR_KEY=${OPERATOR_KEY}"
 
 git clone https://github.com/hiero-ledger/hiero-sdk-js.git
+cd hiero-sdk-js
+task install
+task build
 #cd /Users/jeffrey/hiero-sdk-js
 npx vitest --config=test/vitest-node-integration.config.ts ScheduleCreateIntegrationTest.js
 
