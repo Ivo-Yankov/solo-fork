@@ -40,6 +40,7 @@ export OPERATOR_KEY=$(grep "privateKey" test.log | grep -v "privateKeyRaw" | awk
 echo "OPERATOR_KEY=${OPERATOR_KEY}"
 
 git clone https://github.com/hiero-ledger/hiero-sdk-js.git
+ls -ltr
 cd hiero-sdk-js
 task install
 task build
