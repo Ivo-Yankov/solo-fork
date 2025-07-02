@@ -80,14 +80,14 @@ jobs:
           
           # echo value of github.event.inputs.skip-unit-and-coverage
           echo "skip-unit-and-coverage=${{ github.event.inputs.skip-unit-and-coverage }}"
-          echo "skip-unit-and-coverage==true =${{ github.event.inputs.skip-unit-and-coverage == true }}"
+          echo "skip-unit-and-coverage==true =${{ github.event.inputs.skip-unit-and-coverage }}"
           
           # echo value of github.event_name
           echo "github.event_name=${{ github.event_name == 'workflow_dispatch' }}"
           
-          # echo value of !(github.event_name == 'workflow_dispatch' && github.event.inputs.skip-unit-and-coverage == true)
-          echo "!skip-unit-and-coverage-condition=${{ !(github.event_name == 'workflow_dispatch' && github.event.inputs.skip-unit-and-coverage == true) }}"
-          echo "skip-unit-and-coverage-condition=${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.skip-unit-and-coverage == true) }}"
+          # echo value of !(github.event_name == 'workflow_dispatch' && github.event.inputs.skip-unit-and-coverage)
+          echo "!skip-unit-and-coverage-condition=${{ !(github.event_name == 'workflow_dispatch' && github.event.inputs.skip-unit-and-coverage) }}"
+          echo "skip-unit-and-coverage-condition=${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.skip-unit-and-coverage) }}"
 
   code-style:
     name: Code Style
@@ -100,7 +100,7 @@ jobs:
     uses: ./.github/workflows/zxc-unit-test.yaml
     needs:
       - code-style
-    if: ${{ !(github.event_name == 'workflow_dispatch' && github.event.inputs.skip-unit-and-coverage == true) }}
+    if: ${{ !(github.event_name == 'workflow_dispatch' && github.event.inputs.skip-unit-and-coverage) }}
     with:
       custom-job-label: Standard
 
@@ -134,7 +134,7 @@ jobs:
       - e2e-tests
     if: >
       ${{ github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name &&
-      !(github.event_name == 'workflow_dispatch' && github.event.inputs.skip-unit-and-coverage == true) }}
+      !(github.event_name == 'workflow_dispatch' && github.event.inputs.skip-unit-and-coverage) }}
     with:
       custom-job-label: Standard
       enable-codecov-analysis: true
@@ -150,7 +150,7 @@ jobs:
       - e2e-tests
     if: >
       ${{ github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name &&
-      !(github.event_name == 'workflow_dispatch' && github.event.inputs.skip-unit-and-coverage == true) }}
+      !(github.event_name == 'workflow_dispatch' && github.event.inputs.skip-unit-and-coverage) }}
     with:
       custom-job-label: Coverage
       enable-codacy-coverage: true
@@ -161,6 +161,6 @@ jobs:
   hugo-docs-build:
     name: Hugo Docs Build
     uses: ./.github/workflows/zxc-hugo-build.yaml
-    if: ${{ !(github.event_name == 'workflow_dispatch' && github.event.inputs.skip-unit-and-coverage == true) }}
+    if: ${{ !(github.event_name == 'workflow_dispatch' && github.event.inputs.skip-unit-and-coverage) }}
     with:
       ref: ${{ github.ref }}
