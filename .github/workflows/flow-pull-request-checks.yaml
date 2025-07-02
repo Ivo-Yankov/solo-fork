@@ -77,17 +77,6 @@ jobs:
 
           # Set the output variable 'matrix' with the JSON content
           echo "matrix=$JSON_CONTENT" >> $GITHUB_OUTPUT
-          
-          # echo value of github.event.inputs.skip-unit-and-coverage
-          echo "skip-unit-and-coverage=${{ github.event.inputs.skip-unit-and-coverage }}"
-          echo "skip-unit-and-coverage==true =${{ github.event.inputs.skip-unit-and-coverage }}"
-          
-          # echo value of github.event_name
-          echo "github.event_name=${{ github.event_name == 'workflow_dispatch' }}"
-          
-          # echo value of !(github.event_name == 'workflow_dispatch' && github.event.inputs.skip-unit-and-coverage)
-          echo "!skip-unit-and-coverage-condition=${{ !(github.event_name == 'workflow_dispatch' && github.event.inputs.skip-unit-and-coverage) }}"
-          echo "skip-unit-and-coverage-condition=${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.skip-unit-and-coverage) }}"
 
   code-style:
     name: Code Style
