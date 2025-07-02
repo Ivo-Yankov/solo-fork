@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
+import {TransactionToolCommand} from '../../commands/transaction-tool.js';
+
 /**
  * Dependency injection tokens
  */
@@ -62,4 +64,5 @@ export const InjectTokens = {
   LocalConfigRuntimeState: Symbol.for('LocalConfigRuntimeState'),
   HomeDirectory: Symbol.for('HomeDirectory'),
   QuickStartCommand: Symbol.for('QuickStartCommand'),
+  TransactionToolCommand: Symbol.for('TransactionToolCommand'),
 };

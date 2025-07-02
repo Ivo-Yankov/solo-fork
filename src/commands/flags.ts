@@ -1072,6 +1072,17 @@ export class Flags {
     prompt: undefined,
   };
 
+  public static readonly transactionToolChartVersion: CommandFlag = {
+    constName: 'chartVersion',
+    name: 'chart-version',
+    definition: {
+      describe: 'Transaction-tool chart version',
+      defaultValue: version.TRANSACTION_TOOL_VERSION,
+      type: 'string',
+    },
+    prompt: undefined,
+  };
+
   public static readonly applicationProperties: CommandFlag = {
     constName: 'applicationProperties',
     name: 'application-properties',

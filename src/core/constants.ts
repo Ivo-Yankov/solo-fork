@@ -95,6 +95,12 @@ export const BLOCK_NODE_CHART = 'block-node-helm-chart';
 export const BLOCK_NODE_RELEASE_NAME = 'block-node';
 export const BLOCK_NODE_CONTAINER_NAME: ContainerName = ContainerName.of('block-node-helm-chart');
 
+export const TRANSACTION_TOOL_CHART_URL: string =
+  process.env.TRANSACTION_TOOL_CHART_URL ?? 'oci://ghcr.io/hashgraph/hedera-transaction-tool';
+export const TRANSACTION_TOOL_CHART: string = 'transaction-tool';
+export const TRANSACTION_TOOL_RELEASE_NAME: string = 'transaction-tool'; // TODO: NOT VERIFIED
+export const TRANSACTION_TOOL_CONTAINER_NAME: ContainerName = ContainerName.of('transaction-tool'); // TODO: NOT VERIFIED
+
 // TODO: remove after migrated to resources/solo-config.yaml
 export const CERT_MANAGER_NAME_SPACE = 'cert-manager';
 export const SOLO_HEDERA_MIRROR_IMPORTER = [
@@ -149,6 +155,7 @@ export const POD_CONDITION_STATUS_TRUE = 'True';
 export const EXPLORER_VALUES_FILE = PathEx.joinWithRealPath(RESOURCES_DIR, 'hiero-explorer-values.yaml');
 export const MIRROR_NODE_VALUES_FILE = PathEx.joinWithRealPath(RESOURCES_DIR, 'mirror-node-values.yaml');
 export const BLOCK_NODE_VALUES_FILE = PathEx.joinWithRealPath(RESOURCES_DIR, 'block-node-values.yaml');
+export const TRANSACTION_TOOL_VALUES_FILE = PathEx.joinWithRealPath(RESOURCES_DIR, 'transaction-tool-values.yaml');
 export const NODE_LOG_FAILURE_MSG = 'failed to download logs from pod';
 
 /**
@@ -252,6 +259,14 @@ export const BLOCK_NODE_ACTIVE_TIMEOUT: number = +process.env.NETWORK_NODE_ACTIV
 export const BLOCK_NODE_PORT: number = +process.env.BLOCK_NODE_PORT || 8080;
 export const BLOCK_ITEM_BATCH_SIZE: number = +process.env.BLOCK_ITEM_BATCH_SIZE || 256;
 
+export const TRANSACTION_TOOL_PODS_RUNNING_MAX_ATTEMPTS: number =
+  +process.env.TRANSACTION_TOOL_PODS_RUNNING_MAX_ATTEMPTS || 900;
+export const TRANSACTION_TOOL_PODS_RUNNING_DELAY: number = +process.env.BLOCK_NODE_PODS_RUNNING_DELAY || 1000;
+export const TRANSACTION_TOOL_ACTIVE_MAX_ATTEMPTS: number = +process.env.NETWORK_NODE_ACTIVE_MAX_ATTEMPTS || 100;
+export const TRANSACTION_TOOL_ACTIVE_DELAY: number = +process.env.NETWORK_NODE_ACTIVE_DELAY || 1000;
+export const TRANSACTION_TOOL_ACTIVE_TIMEOUT: number = +process.env.NETWORK_NODE_ACTIVE_TIMEOUT || 1000;
+export const TRANSACTION_TOOL_PORT: number = +process.env.BLOCK_NODE_PORT || 8080;
+
 export const GRPC_PORT = +process.env.GRPC_PORT || 50_211;
 export const LOCAL_BUILD_COPY_RETRY = +process.env.LOCAL_BUILD_COPY_RETRY || 3;
 
@@ -271,6 +286,8 @@ export const MIRROR_INGRESS_TLS_SECRET_NAME = 'ca-secret-mirror-node';
 export const EXPLORER_INGRESS_TLS_SECRET_NAME = 'ca-secret-hiero-explorer';
 
 export const BLOCK_NODE_IMAGE_NAME: string = 'block-node-server';
+export const TRANSACTION_TOOL_IMAGE_NAME: string = 'transaction-tool';
+
 export const enum StorageType {
   MINIO_ONLY = 'minio_only',
   AWS_ONLY = 'aws_only',

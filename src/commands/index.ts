@@ -10,10 +10,11 @@ import {type AccountCommand} from './account.js';
 import {type DeploymentCommand} from './deployment.js';
 import {type ExplorerCommand} from './explorer.js';
 import {type BlockNodeCommand} from './block-node.js';
-import {container} from 'tsyringe-neo';
-import {InjectTokens} from '../core/dependency-injection/inject-tokens.js';
 import {type QuickStartCommand} from './quick-start.js';
 import {type CommandDefinition} from '../types/index.js';
+import {type TransactionToolCommand} from './transaction-tool.js';
+import {container} from 'tsyringe-neo';
+import {InjectTokens} from '../core/dependency-injection/inject-tokens.js';
 
 /**
  * Return a list of Yargs command builder to be exposed through CLI
@@ -31,6 +32,7 @@ export function Initialize(): CommandDefinition[] {
   const deploymentCommand: DeploymentCommand = container.resolve(InjectTokens.DeploymentCommand);
   const blockNodeCommand: BlockNodeCommand = container.resolve(InjectTokens.BlockNodeCommand);
   const quickStartCommand: QuickStartCommand = container.resolve(InjectTokens.QuickStartCommand);
+  const transactionToolCommand: TransactionToolCommand = container.resolve(InjectTokens.TransactionToolCommand);
   return [
     initCmd.getCommandDefinition(),
     accountCmd.getCommandDefinition(),
@@ -43,5 +45,6 @@ export function Initialize(): CommandDefinition[] {
     deploymentCommand.getCommandDefinition(),
     blockNodeCommand.getCommandDefinition(),
     quickStartCommand.getCommandDefinition(),
+    transactionToolCommand.getCommandDefinition(),
   ];
 }
