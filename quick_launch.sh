@@ -1,3 +1,7 @@
+#!/bin/bash
+set -eo pipefail
+
+
 npm install -g @hashgraph/solo@0.38.0
 
 export SOLO_CLUSTER_NAME=solo-e2e
