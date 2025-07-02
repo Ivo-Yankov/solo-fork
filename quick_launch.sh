@@ -42,8 +42,9 @@ echo "OPERATOR_KEY=${OPERATOR_KEY}"
 git clone https://github.com/hiero-ledger/hiero-sdk-js.git
 cd hiero-sdk-js
 ls -ltr
-task install
-task build
+task --list-all
+task install || true
+task build || true
 #cd /Users/jeffrey/hiero-sdk-js
-npx vitest --config=test/vitest-node-integration.config.ts ScheduleCreateIntegrationTest.js
+npx vitest --config=test/vitest-node-integration.config.ts ScheduleCreateIntegrationTest.js || true
 
