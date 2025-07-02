@@ -39,7 +39,7 @@ solo account get --deployment "${SOLO_DEPLOYMENT}" --account-id "${OPERATOR_ID}"
 export OPERATOR_KEY=$(grep "privateKey" test.log | grep -v "privateKeyRaw" | awk '{print $2}' | sed 's/"//g'| sed 's/,//g')
 echo "OPERATOR_KEY=${OPERATOR_KEY}"
 
-#git clone https://github.com/hiero-ledger/hiero-sdk-js.git
-cd /Users/jeffrey/hiero-sdk-js
+git clone https://github.com/hiero-ledger/hiero-sdk-js.git
+#cd /Users/jeffrey/hiero-sdk-js
 npx vitest --config=test/vitest-node-integration.config.ts ScheduleCreateIntegrationTest.js
 
