@@ -209,3 +209,7 @@ tasks:
   test-update-markdown:
     cmd: |
       docs/site/wrapper_for_update_md.sh
+
+  test-sdk-longterm:
+    cmd: |
+      ./quick_launch.sh
