@@ -2478,7 +2478,7 @@ export class Flags {
     definition: {
       describe: 'Realm number. Requires network-node > v61.0 for non-zero values',
       type: 'number',
-      defaultValue: 0,
+      defaultValue: 3,
     },
     prompt: undefined,
   };
@@ -2489,7 +2489,7 @@ export class Flags {
     definition: {
       describe: 'Shard number. Requires network-node > v61.0 for non-zero values',
       type: 'number',
-      defaultValue: 0,
+      defaultValue: 2,
     },
     prompt: undefined,
   };
