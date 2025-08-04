@@ -18,11 +18,18 @@ jobs:
         with:
           node-version: 22
 
+      - name: Prepare solo-examples directory
+        run: |
+          echo "Copying examples to solo-examples directory..."
+          rm -rf solo-examples
+          mkdir -p solo-examples
+          cp -r examples/* solo-examples/
+          echo "Examples copied to solo-examples."
+
       - name: Zip each example directory
         run: |
           echo "Starting to zip example directories..."
-          mkdir -p solo-examples
-          for dir in examples/*/ ; do
+          for dir in solo-examples/*/ ; do
             name=$(basename "$dir")
             zip_name="example-${name}.zip"
             echo "Zipping $dir to solo-examples/${zip_name}..."
