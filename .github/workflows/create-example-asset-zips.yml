@@ -21,11 +21,12 @@ jobs:
       - name: Zip each example directory
         run: |
           echo "Starting to zip example directories..."
-          mkdir -p zips
+          mkdir -p solo-examples
           for dir in examples/*/ ; do
             name=$(basename "$dir")
-            echo "Zipping $dir to zips/${name}.zip..."
-            zip -r "zips/${name}.zip" "$dir"
+            zip_name="example-${name}.zip"
+            echo "Zipping $dir to solo-examples/${zip_name}..."
+            zip -r "solo-examples/${zip_name}" "$dir"
             echo "Finished zipping $dir."
           done
           echo "All example directories zipped."
@@ -52,7 +53,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Starting upload of zipped examples..."
-          for zip in zips/*.zip; do
+          for zip in solo-examples/*.zip; do
             name=$(basename "$zip")
             echo "Uploading $zip as $name..."
             curl -sSL \
@@ -64,3 +65,9 @@ jobs:
             echo "Finished uploading $name."
           done
           echo "All zipped examples uploaded."
+
+      - name: Remove solo-examples directory
+        run: |
+          echo "Removing solo-examples directory..."
+          rm -rf solo-examples
+          echo "solo-examples directory removed."
