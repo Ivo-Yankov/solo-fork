@@ -2,9 +2,8 @@ name: Zip and Upload Examples
 
 on:
   workflow_dispatch:
-  push:
-    tags:
-      - 'v*'
+  release:
+    types: [published]
 
 jobs:
   zip-and-upload:
