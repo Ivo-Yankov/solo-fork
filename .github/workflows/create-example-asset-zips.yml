@@ -2,12 +2,23 @@ name: Zip and Upload Examples
 
 on:
   workflow_dispatch:
-  release:
-    types: [published]
+    inputs:
+      release_selection:
+        description: 'Select which release to use'
+        type: choice
+        required: true
+        default: 'latest'
+        options:
+          - latest
+          - specific
+      release_tag:
+        description: 'Release tag (only needed if "specific" is selected above)'
+        required: false
+        type: string
+        default: ''
 
 permissions:
   contents: write
-  releases: write
 
 jobs:
   zip-and-upload:
@@ -41,24 +52,43 @@ jobs:
           done
           echo "All example directories zipped."
 
-      - name: Get latest release
+      - name: Get specific release
         id: get_release
         uses: actions/github-script@v7
         with:
           script: |
-            const releases = await github.rest.repos.listReleases({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              per_page: 1
-            });
-            if (releases.data.length === 0) {
-              throw new Error('No releases found');
+            const releaseSelection = '${{ github.event.inputs.release_selection }}';
+            const releaseTag = '${{ github.event.inputs.release_tag }}';
+            console.log(`Release selection: ${releaseSelection}, Release tag: ${releaseTag}`);
+            
+            let release;
+            if (releaseSelection === 'latest') {
+              console.log('Looking for the latest release...');
+              const latestRelease = await github.rest.repos.getLatestRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo
+              });
+              release = latestRelease.data;
+            } else if (releaseSelection === 'specific' && releaseTag) {
+              console.log(`Looking for release with tag: ${releaseTag}`);
+              const releases = await github.rest.repos.listReleases({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 100
+              });
+              release = releases.data.find(r => r.tag_name === releaseTag);
+            } else {
+              core.setFailed('Invalid release selection or tag not provided for specific release.');
+              return;
             }
+            
+            console.log(`Found release: ${release.name} (ID: ${release.id})`);
+            
             // Remove the template part from upload_url (everything after '{')
-            const uploadUrl = releases.data[0].upload_url.split('{')[0];
+            const uploadUrl = release.upload_url.split('{')[0];
             core.setOutput('upload_url', uploadUrl);
 
-      - name: Upload zipped examples to latest release
+      - name: Upload zipped examples to release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
