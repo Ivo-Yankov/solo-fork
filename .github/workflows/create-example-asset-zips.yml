@@ -3,7 +3,7 @@ name: Zip and Upload Examples
 on:
   workflow_dispatch:
   release:
-    types: [published, released, created]
+    types: [published]
 
 jobs:
   zip-and-upload:
