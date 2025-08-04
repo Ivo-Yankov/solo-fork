@@ -20,11 +20,15 @@ jobs:
 
       - name: Zip each example directory
         run: |
+          echo "Starting to zip example directories..."
           mkdir -p zips
           for dir in examples/*/ ; do
             name=$(basename "$dir")
+            echo "Zipping $dir to zips/${name}.zip..."
             zip -r "zips/${name}.zip" "$dir"
+            echo "Finished zipping $dir."
           done
+          echo "All example directories zipped."
 
       - name: Get latest release
         id: get_release
@@ -39,19 +43,24 @@ jobs:
             if (releases.data.length === 0) {
               throw new Error('No releases found');
             }
-            core.setOutput('upload_url', releases.data[0].upload_url);
+            // Remove the template part from upload_url (everything after '{')
+            const uploadUrl = releases.data[0].upload_url.split('{')[0];
+            core.setOutput('upload_url', uploadUrl);
 
       - name: Upload zipped examples to latest release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          echo "Starting upload of zipped examples..."
           for zip in zips/*.zip; do
             name=$(basename "$zip")
+            echo "Uploading $zip as $name..."
             curl -sSL \
               -X POST \
               -H "Authorization: Bearer $GITHUB_TOKEN" \
               -H "Content-Type: application/zip" \
               --data-binary @"$zip" \
               "${{ steps.get_release.outputs.upload_url }}?name=$name"
+            echo "Finished uploading $name."
           done
-
+          echo "All zipped examples uploaded."
