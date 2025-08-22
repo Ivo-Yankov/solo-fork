@@ -38,5 +38,5 @@ jobs:
       - name: Create Example Asset Archives
         run: |
           echo "Creating example asset archives for release..."
-          task -t scripts/Taskfile.examples.yml create-example-asset-archives UPLOAD_TO_RELEASE=true RELEASE_TAG=v${{ github.event.inputs.release_tag }} CLEAN_UP=true
+          GH_TOKEN=${{ secrets.GITHUB_TOKEN }} task -t scripts/Taskfile.examples.yml create-example-asset-archives UPLOAD_TO_RELEASE=true RELEASE_TAG=v${{ github.event.inputs.release_tag }} CLEAN_UP=true
           echo "Example assets created and uploaded to release."
