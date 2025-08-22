@@ -38,7 +38,7 @@ tasks:
           
           echo "Uploading to release ID: $RELEASE_ID"
           
-           Upload each zip file to the release
+           # Upload each zip file to the release
            for zip in solo-examples/*.zip; do
              name=$(basename "$zip")
              echo "Uploading $zip as $name..."
